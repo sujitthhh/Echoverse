@@ -1,7 +1,9 @@
 streamlit
 ibm-watson
+ibm-watsonx-ai
 ibm-cloud-sdk-core
 python-dotenv
 gtts
 pyttsx3
 pydub
+
