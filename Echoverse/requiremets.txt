@@ -1,4 +1,6 @@
 streamlit
-python-dotenv
+gtts
+pyttsx3
 ibm-watson
-ibm-watsonx-ai
+python-dotenv
+
