@@ -3,4 +3,6 @@ gtts
 pyttsx3
 ibm-watson
 python-dotenv
+ibm-cloud-sdk-core
+
 
