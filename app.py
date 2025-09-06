@@ -1,33 +1,24 @@
 import os
-ibm_key = os.getenv("IBM_TTS_APIKEY")
-ibm_url = os.getenv("IBM_TTS_URL")
-
-import streamlit as st 
-st.markdown("[Click here to open app](https://your-streamlit-app-url)")
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # ignore if dotenv isn't installed
-
+import streamlit as st
+from dotenv import load_dotenv
 
 # IBM TTS
 from ibm_watson import TextToSpeechV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
-# IBM watsonx.ai LLM
+# IBM watsonx.ai
 from ibm_watsonx_ai import Credentials
 from ibm_watsonx_ai.foundation_models import Model
 
 # ---------- Setup ----------
 load_dotenv()
 
-# watsonx.ai creds (read from .env file)
+# watsonx.ai creds (from .env file)
 WX_API_KEY = os.getenv("WATSONX_API_KEY")
 WX_URL = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
 WX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")
 
-# TTS creds (read from .env file)
+# TTS creds (from .env file)
 TTS_API_KEY = os.getenv("TTS_API_KEY")
 TTS_URL = os.getenv("TTS_URL", "https://api.us-south.text-to-speech.watson.cloud.ibm.com")
 
@@ -42,7 +33,7 @@ def get_watsonx_model():
         return None
     creds = Credentials(api_key=WX_API_KEY, url=WX_URL)
     return Model(
-        model_id="ibm/granite-13b-instruct-v2",   # ✅ use a supported model
+        model_id="ibm/granite-13b-instruct-v2",
         params={
             "max_new_tokens": 300,
             "temperature": 0.7,
@@ -97,18 +88,15 @@ Rewrite the following text faithfully to the meaning while adapting the tone:
         elif isinstance(result, str):
             rewritten = result.strip()
 
-        return rewritten if rewritten else text  # fallback without warning
+        return rewritten if rewritten else text
     except Exception:
         return text
-
-
-
 
 def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
     """Synthesizes speech using IBM Text to Speech and returns MP3 bytes."""
     tts = get_tts_client()
     if tts is None or not text.strip():
-        return b""  # no debug messages, just fail silently
+        return b""
 
     try:
         res = tts.synthesize(
@@ -119,9 +107,6 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
         return res.content
     except Exception:
         return b""
-
-
-
 
 # ---------- UI ----------
 tab1, tab2 = st.tabs(["Paste text", "Upload .txt"])
@@ -180,4 +165,3 @@ if gen and user_text:
         )
     else:
         st.warning("⚠️ No audio generated. Check your TTS setup.")
-
