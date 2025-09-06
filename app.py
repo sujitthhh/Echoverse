@@ -162,10 +162,10 @@ if gen and user_text:
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Original")
-        st.write(user_text)
+        st.markdown(user_text)
     with col2:
         st.subheader(f"{tone} rewrite")
-        st.write(rewritten)
+        st.markdown(rewritten)
 
     with st.spinner("Creating narration with IBM Text-to-Speech..."):
         audio_bytes = speak_ibm_tts(rewritten, voice=voice)
