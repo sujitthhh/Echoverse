@@ -1,6 +1,14 @@
 import os
+ibm_key = os.getenv("IBM_TTS_APIKEY")
+ibm_url = os.getenv("IBM_TTS_URL")
+
 import streamlit as st
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # ignore if dotenv isn't installed
+
 
 # IBM TTS
 from ibm_watson import TextToSpeechV1
@@ -171,4 +179,5 @@ if gen and user_text:
         )
     else:
         st.warning("⚠️ No audio generated. Check your TTS setup.")
+
 
