@@ -2,7 +2,8 @@ import os
 ibm_key = os.getenv("IBM_TTS_APIKEY")
 ibm_url = os.getenv("IBM_TTS_URL")
 
-import streamlit as st
+import streamlit as st 
+st.markdown("[Click here to open app](https://your-streamlit-app-url)")
 try:
     from dotenv import load_dotenv
     load_dotenv()
