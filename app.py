@@ -23,7 +23,7 @@ TTS_API_KEY = os.getenv("TTS_API_KEY")
 TTS_URL = os.getenv("TTS_URL", "https://api.us-south.text-to-speech.watson.cloud.ibm.com")
 
 st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="centered")
-st.title("🎧 EchoVerse — AI Audiobook Creator (by TechElite)")
+st.title("🎧 EchoVerse — AI Audiobook Creator (By TechElite)")
 st.caption("Paste or upload text → choose tone → rewrite with IBM watsonx.ai → speak with IBM Text-to-Speech → listen or download MP3.")
 
 # ---------- Helpers ----------
