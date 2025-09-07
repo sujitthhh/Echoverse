@@ -24,7 +24,7 @@ TTS_URL = os.getenv("TTS_URL", "https://api.us-south.text-to-speech.watson.cloud
 
 st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="centered")
 st.title("🎧 EchoVerse — AI Audiobook Creator (By TechElite)")
-st.caption("Paste or upload text → choose tone → listen or download MP3.")
+st.caption("Paste or upload text → choose tone → choose voice → listen or download MP3.")
 
 # ---------- Helpers ----------
 @st.cache_resource(show_spinner=False)
