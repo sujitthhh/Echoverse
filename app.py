@@ -92,7 +92,7 @@ Rewrite the following text faithfully to the meaning while adapting the tone:
     except Exception:
         return text
 
-def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
+def speak_ibm_tts(text: str, voice: str = "Allison") -> bytes:
     """Synthesizes speech using IBM Text to Speech and returns MP3 bytes."""
     tts = get_tts_client()
     if tts is None or not text.strip():
@@ -127,21 +127,21 @@ tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring
 voice = st.selectbox(
     "🗣️ Choose voice",
     [
-        "en-US_AllisonV3Voice",
-        "en-US_LisaV3Voice",
-        "en-US_MichaelV3Voice",
-        "en-GB_CharlotteV3Voice",
-        "en-GB_JamesV3Voice",
-        "en-GB_KateV3Voice",
+        "Allison",
+        "Lisa",
+        "Michael",
+        "Charlotte",
+        "James",
+        "Kate",
     ],
     index=0,
-    help="IBM voices (more can be added later)."
+    help="Select voices (more can be added later)."
 )
 
 gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not user_text)
 
 if gen and user_text:
-    with st.spinner("Rewriting with watsonx.ai..."):
+    with st.spinner("Rewriting..."):
         rewritten = rewrite_with_tone(user_text, tone)
 
     col1, col2 = st.columns(2)
@@ -152,7 +152,7 @@ if gen and user_text:
         st.subheader(f"{tone} rewrite")
         st.markdown(rewritten)
 
-    with st.spinner("Creating narration with IBM Text-to-Speech..."):
+    with st.spinner("Creating narration ..."):
         audio_bytes = speak_ibm_tts(rewritten, voice=voice)
 
     if audio_bytes:
