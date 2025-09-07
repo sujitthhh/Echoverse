@@ -127,12 +127,12 @@ tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring
 voice = st.selectbox(
     "🗣️ Choose voice",
     [
-        "Allison",
-        "Lisa",
-        "Michael",
-        "Charlotte",
-        "James",
-        "Kate",
+        "en-US_AllisonV3Voice",
+        "en-US_LisaV3Voice",
+        "en-US_MichaelV3Voice",
+        "en-GB_CharlotteV3Voice",
+        "en-GB_JamesV3Voice",
+        "en-GB_KateV3Voice",
     ],
     index=0,
     help="Select voices (more can be added later)."
