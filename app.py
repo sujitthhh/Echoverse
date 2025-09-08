@@ -95,17 +95,20 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
     """Synthesizes speech using IBM Text to Speech and returns MP3 bytes."""
     tts = get_tts_client()
     if tts is None or not text.strip():
+        st.error("❌ TTS client not initialized or empty text.")
         return b""
 
     try:
         res = tts.synthesize(
             text=text.strip(),
-            voice=voice,
+            voice=voice,   # full voice name required
             accept="audio/mp3"
         ).get_result()
         return res.content
-    except Exception:
+    except Exception as e:
+        st.error(f"❌ TTS error: {str(e)}")
         return b""
+
 
 # ---------- UI ----------
 tab1, tab2 = st.tabs(["Paste text", "Upload .txt"])
