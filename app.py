@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
+import PyPDF2   # 📘 for reading PDFs
 
 # IBM TTS
 from ibm_watson import TextToSpeechV1
@@ -24,7 +25,8 @@ TTS_URL = os.getenv("TTS_URL", "https://api.us-south.text-to-speech.watson.cloud
 
 st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="centered")
 st.title("🎧 EchoVerse — AI Audiobook Creator (By TechElite)")
-st.caption("Paste or upload text → choose tone → choose voice →  listen or download MP3.")
+st.caption("Paste or upload text/PDF → choose tone → choose voice → listen or download MP3.")
+
 # ---------- Helpers ----------
 @st.cache_resource(show_spinner=False)
 def get_watsonx_model():
@@ -80,13 +82,11 @@ Rewrite the following text faithfully to the meaning while adapting the tone:
 
     try:
         result = model.generate_text(prompt=prompt)
-
         rewritten = ""
         if isinstance(result, dict):
             rewritten = result.get("generated_text", "").strip()
         elif isinstance(result, str):
             rewritten = result.strip()
-
         return rewritten if rewritten else text
     except Exception:
         return text
@@ -101,7 +101,7 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
     try:
         res = tts.synthesize(
             text=text.strip(),
-            voice=voice,   # full voice name required
+            voice=voice,
             accept="audio/mp3"
         ).get_result()
         return res.content
@@ -109,9 +109,10 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
         st.error(f"❌ TTS error: {str(e)}")
         return b""
 
-
 # ---------- UI ----------
-tab1, tab2 = st.tabs(["Paste text", "Upload .txt"])
+tab1, tab2, tab3 = st.tabs(["Paste text", "Upload .txt", "Upload .pdf"])
+
+user_text = ""
 
 with tab1:
     user_text = st.text_area("📖 Enter your text", height=200, placeholder="Type or paste your story/article here...")
@@ -124,6 +125,15 @@ with tab2:
         except UnicodeDecodeError:
             file_text = uploaded.read().decode("latin-1")
         user_text = file_text
+
+with tab3:
+    pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+    if pdf_file is not None:
+        reader = PyPDF2.PdfReader(pdf_file)
+        pdf_text = ""
+        for page in reader.pages:
+            pdf_text += page.extract_text() + "\n"
+        user_text = pdf_text
 
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
 voice = st.selectbox(
