@@ -1,38 +1,31 @@
 import os
-ibm_key = os.getenv("IBM_TTS_APIKEY")
-ibm_url = os.getenv("IBM_TTS_URL")
-
 import streamlit as st
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # ignore if dotenv isn't installed
-
+from dotenv import load_dotenv
+import PyPDF2   # 📘 for reading PDFs
 
 # IBM TTS
 from ibm_watson import TextToSpeechV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
-# IBM watsonx.ai LLM
+# IBM watsonx.ai
 from ibm_watsonx_ai import Credentials
 from ibm_watsonx_ai.foundation_models import Model
 
 # ---------- Setup ----------
 load_dotenv()
 
-# watsonx.ai creds (read from .env file)
+# watsonx.ai creds (from .env file)
 WX_API_KEY = os.getenv("WATSONX_API_KEY")
 WX_URL = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
 WX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")
 
-# TTS creds (read from .env file)
+# TTS creds (from .env file)
 TTS_API_KEY = os.getenv("TTS_API_KEY")
 TTS_URL = os.getenv("TTS_URL", "https://api.us-south.text-to-speech.watson.cloud.ibm.com")
 
 st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="centered")
-st.title("🎧 EchoVerse — AI Audiobook Creator (by TechElite)")
-st.caption("Paste or upload text → choose tone → rewrite with IBM watsonx.ai → speak with IBM Text-to-Speech → listen or download MP3.")
+st.title("🎧 EchoVerse — AI Audiobook Creator (By TechElite)")
+st.caption("Paste or upload text/PDF → choose tone → choose voice → listen or download MP3.")
 
 # ---------- Helpers ----------
 @st.cache_resource(show_spinner=False)
@@ -41,7 +34,7 @@ def get_watsonx_model():
         return None
     creds = Credentials(api_key=WX_API_KEY, url=WX_URL)
     return Model(
-        model_id="ibm/granite-13b-instruct-v2",   # ✅ use a supported model
+        model_id="ibm/granite-13b-instruct-v2",
         params={
             "max_new_tokens": 300,
             "temperature": 0.7,
@@ -89,25 +82,21 @@ Rewrite the following text faithfully to the meaning while adapting the tone:
 
     try:
         result = model.generate_text(prompt=prompt)
-
         rewritten = ""
         if isinstance(result, dict):
             rewritten = result.get("generated_text", "").strip()
         elif isinstance(result, str):
             rewritten = result.strip()
-
-        return rewritten if rewritten else text  # fallback without warning
+        return rewritten if rewritten else text
     except Exception:
         return text
-
-
-
 
 def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
     """Synthesizes speech using IBM Text to Speech and returns MP3 bytes."""
     tts = get_tts_client()
     if tts is None or not text.strip():
-        return b""  # no debug messages, just fail silently
+        st.error("❌ TTS client not initialized or empty text.")
+        return b""
 
     try:
         res = tts.synthesize(
@@ -116,14 +105,14 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
             accept="audio/mp3"
         ).get_result()
         return res.content
-    except Exception:
+    except Exception as e:
+        st.error(f"❌ TTS error: {str(e)}")
         return b""
 
-
-
-
 # ---------- UI ----------
-tab1, tab2 = st.tabs(["Paste text", "Upload .txt"])
+tab1, tab2, tab3 = st.tabs(["Paste text", "Upload .txt", "Upload .pdf"])
+
+user_text = ""
 
 with tab1:
     user_text = st.text_area("📖 Enter your text", height=200, placeholder="Type or paste your story/article here...")
@@ -137,6 +126,15 @@ with tab2:
             file_text = uploaded.read().decode("latin-1")
         user_text = file_text
 
+with tab3:
+    pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+    if pdf_file is not None:
+        reader = PyPDF2.PdfReader(pdf_file)
+        pdf_text = ""
+        for page in reader.pages:
+            pdf_text += page.extract_text() + "\n"
+        user_text = pdf_text
+
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
 voice = st.selectbox(
     "🗣️ Choose voice",
@@ -149,24 +147,24 @@ voice = st.selectbox(
         "en-GB_KateV3Voice",
     ],
     index=0,
-    help="IBM voices (more can be added later)."
+    help="Select voices (more can be added later)."
 )
 
 gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not user_text)
 
 if gen and user_text:
-    with st.spinner("Rewriting with watsonx.ai..."):
+    with st.spinner("Rewriting..."):
         rewritten = rewrite_with_tone(user_text, tone)
 
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Original")
-        st.write(user_text)
+        st.markdown(user_text)
     with col2:
         st.subheader(f"{tone} rewrite")
-        st.write(rewritten)
+        st.markdown(rewritten)
 
-    with st.spinner("Creating narration with IBM Text-to-Speech..."):
+    with st.spinner("Creating narration ..."):
         audio_bytes = speak_ibm_tts(rewritten, voice=voice)
 
     if audio_bytes:
@@ -179,5 +177,3 @@ if gen and user_text:
         )
     else:
         st.warning("⚠️ No audio generated. Check your TTS setup.")
-
-
