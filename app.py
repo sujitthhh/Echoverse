@@ -91,7 +91,7 @@ Rewrite the following text faithfully to the meaning while adapting the tone:
     except Exception:
         return text
 
-def speak_ibm_tts(text: str, voice: str = "Allison") -> bytes:
+def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
     """Synthesizes speech using IBM Text to Speech and returns MP3 bytes."""
     tts = get_tts_client()
     if tts is None or not text.strip():
