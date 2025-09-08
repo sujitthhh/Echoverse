@@ -90,6 +90,7 @@ Rewrite the following text faithfully to the meaning while adapting the tone:
         return rewritten if rewritten else text
     except Exception:
         return text
+st.write("DEBUG TTS_URL:", TTS_URL)
 
 def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
     """Synthesizes speech using IBM Text to Speech and returns MP3 bytes."""
