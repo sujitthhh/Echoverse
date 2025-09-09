@@ -170,7 +170,7 @@ voice = st.selectbox(
     help="Select voices (more can be added later)."
 )
 
-lang = st.selectbox("🌍 Translate narration into language", ["None", "en", "es", "fr", "de", "hi", "zh-CN"])
+lang = st.selectbox("🌍 Translate narration into language", ["None", "English","Hindi", "Spanish", "French", "German"])
 
 audio_format = st.radio("🎵 Audio format", ["mp3", "wav"], index=0)
 
