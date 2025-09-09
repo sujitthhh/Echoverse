@@ -8,4 +8,3 @@ pyttsx3
 pydub
 PyPDF2
 python-docx
-deep-translator
