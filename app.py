@@ -118,29 +118,29 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice", audio_format="
 
 
 # ---------- Input Tabs ----------
-st.sidebar.header("📂 Input Options")
-input_mode = st.sidebar.radio("Choose input type", ["Paste Text", "Upload .txt", "Upload PDF", "Upload Word (.docx)"])
+col1, col2 = st.columns(2)
 
-user_text = ""
-if input_mode == "Paste Text":
-    user_text = st.text_area("📖 Enter your text", height=200)
+with col1:
+    if st.button("✍️ Paste Text"):
+        user_text = st.text_area("📖 Enter your text", height=200)
 
-elif input_mode == "Upload .txt":
-    uploaded = st.sidebar.file_uploader("Upload .txt", type=["txt"])
-    if uploaded:
-        user_text = uploaded.read().decode("utf-8", errors="ignore")
+    if st.button("📂 Upload .txt"):
+        uploaded = st.file_uploader("Upload a .txt", type=["txt"])
+        if uploaded:
+            user_text = uploaded.read().decode("utf-8", errors="ignore")
 
-elif input_mode == "Upload PDF":
-    pdf_file = st.sidebar.file_uploader("Upload PDF", type=["pdf"])
-    if pdf_file:
-        reader = PyPDF2.PdfReader(pdf_file)
-        user_text = "".join([page.extract_text() for page in reader.pages])
+with col2:
+    if st.button("📄 Upload PDF"):
+        pdf_file = st.file_uploader("Upload PDF", type=["pdf"])
+        if pdf_file:
+            reader = PyPDF2.PdfReader(pdf_file)
+            user_text = "".join([page.extract_text() for page in reader.pages])
 
-elif input_mode == "Upload Word (.docx)":
-    docx_file = st.sidebar.file_uploader("Upload Word file", type=["docx"])
-    if docx_file:
-        doc = docx.Document(docx_file)
-        user_text = "\n".join([para.text for para in doc.paragraphs])
+    if st.button("📘 Upload Word (.docx)"):
+        docx_file = st.file_uploader("Upload Word", type=["docx"])
+        if docx_file:
+            doc = docx.Document(docx_file)
+            user_text = "\n".join([para.text for para in doc.paragraphs])
 
 # ---------- Options ----------
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
