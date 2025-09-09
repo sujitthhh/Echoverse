@@ -118,37 +118,29 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice", audio_format="
 
 
 # ---------- Input Tabs ----------
-tab1, tab2, tab3, tab4 = st.tabs(["Paste text", "Upload .txt", "Upload .pdf", "Upload .docx"])
+st.sidebar.header("📂 Input Options")
+input_mode = st.sidebar.radio("Choose input type", ["Paste Text", "Upload .txt", "Upload PDF", "Upload Word (.docx)"])
 
 user_text = ""
+if input_mode == "Paste Text":
+    user_text = st.text_area("📖 Enter your text", height=200)
 
-with tab1:
-    user_text = st.text_area("Enter your text", height=200, placeholder="Type or paste your story/article here...")
+elif input_mode == "Upload .txt":
+    uploaded = st.sidebar.file_uploader("Upload .txt", type=["txt"])
+    if uploaded:
+        user_text = uploaded.read().decode("utf-8", errors="ignore")
 
-with tab2:
-    uploaded = st.file_uploader("Upload a .txt file", type=["txt"])
-    if uploaded is not None:
-        try:
-            file_text = uploaded.read().decode("utf-8")
-        except UnicodeDecodeError:
-            file_text = uploaded.read().decode("latin-1")
-        user_text = file_text
-
-with tab3:
-    pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
-    if pdf_file is not None:
+elif input_mode == "Upload PDF":
+    pdf_file = st.sidebar.file_uploader("Upload PDF", type=["pdf"])
+    if pdf_file:
         reader = PyPDF2.PdfReader(pdf_file)
-        pdf_text = ""
-        for page in reader.pages:
-            pdf_text += page.extract_text() + "\n"
-        user_text = pdf_text
+        user_text = "".join([page.extract_text() for page in reader.pages])
 
-with tab4:
-    docx_file = st.file_uploader("Upload a Word file", type=["docx"])
-    if docx_file is not None:
+elif input_mode == "Upload Word (.docx)":
+    docx_file = st.sidebar.file_uploader("Upload Word file", type=["docx"])
+    if docx_file:
         doc = docx.Document(docx_file)
-        doc_text = "\n".join([para.text for para in doc.paragraphs])
-        user_text = doc_text
+        user_text = "\n".join([para.text for para in doc.paragraphs])
 
 # ---------- Options ----------
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
