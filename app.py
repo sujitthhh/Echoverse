@@ -18,30 +18,7 @@ from ibm_watsonx_ai.foundation_models import Model
 load_dotenv()
 st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="centered")
 
-st.markdown(
-    """
-    <style>
-    .animated-title {
-        font-size: 42px;
-        font-weight: 800;
-        text-align: center;
-        background: linear-gradient(270deg, #38bdf8, #0ea5e9, #06b6d4);
-        background-size: 600% 600%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        animation: gradientShift 8s ease infinite;
-        margin-bottom: 0.2em;
-    }
-
-    @keyframes gradientShift {
-        0% {background-position: 0% 50%;}
-        50% {background-position: 100% 50%;}
-        100% {background-position: 0% 50%;}
-    }
-    </style>
-
-    <h1 class="animated-title">🎧 EchoVerse — AI Audiobook Creator</h1>
-    """,)
+st.title("🎧 EchoVerse — AI Audiobook Creator (By TechElite)")
 st.caption("Paste or upload text → choose tone → choose voice → listen or download.")
 
 # ---------- Credentials ----------
