@@ -120,7 +120,7 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice", audio_format="
 
 
 # ---------- Input Tabs ----------
-tab1, tab2, tab3, tab4 = st.tabs(["✍️ Paste text", "📂 Upload .txt", "📄 Upload .pdf", "📘 Upload .docx"])
+tab1, tab2, tab3, tab4 = st.tabs(["Paste text", "Upload .txt", "Upload .pdf", "Upload .docx"])
 
 user_text = ""
 
