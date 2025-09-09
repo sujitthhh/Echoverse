@@ -23,21 +23,6 @@ st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="centered")
 st.title("🎧 EchoVerse — AI Audiobook Creator (By TechElite)")
 st.caption("Paste or upload text → choose tone → choose voice → listen or download.")
 
-
-# ---------- Theme Toggle ----------
-if "theme" not in st.session_state:
-    st.session_state.theme = "dark"
-
-theme = st.radio("Choose Theme", ["dark", "light"], index=0 if st.session_state.theme == "dark" else 1)
-
-if theme == "dark":
-    st.markdown("<style>body { background-color: #111; color: #fff; }</style>", unsafe_allow_html=True)
-    st.session_state.theme = "dark"
-else:
-    st.markdown("<style>body { background-color: #fff; color: #000; }</style>", unsafe_allow_html=True)
-    st.session_state.theme = "light"
-
-
 # ---------- Credentials ----------
 WX_API_KEY = os.getenv("WATSONX_API_KEY")
 WX_URL = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
