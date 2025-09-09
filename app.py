@@ -199,6 +199,6 @@ if gen and user_text:
             file_name="echoverse_narration.mp3",
             mime="audio/mp3",
         )
-        st.success("✅ Audio ready!")
+        st.success("✅ Your Audio is Ready!")
     else:
         st.warning("⚠️ No audio generated. Check your TTS setup.")
