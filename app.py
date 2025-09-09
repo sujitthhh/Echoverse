@@ -1,9 +1,8 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-import PyPDF2   # 📘 for reading PDFs
-import docx     # 📘 for reading Word files
-from docx import Document
+import PyPDF2                     # PDF reading
+from docx import Document         # DOCX reading
 
 # IBM TTS
 from ibm_watson import TextToSpeechV1
@@ -38,11 +37,7 @@ def get_watsonx_model():
     creds = Credentials(api_key=WX_API_KEY, url=WX_URL)
     return Model(
         model_id="ibm/granite-13b-instruct-v2",
-        params={
-            "max_new_tokens": 300,
-            "temperature": 0.7,
-            "decoding_method": "sample",
-        },
+        params={"max_new_tokens": 300, "temperature": 0.7, "decoding_method": "sample"},
         credentials=creds,
         project_id=WX_PROJECT_ID,
     )
@@ -61,7 +56,7 @@ def get_tts_client():
 def rewrite_with_tone(text: str, tone: str) -> str:
     model = get_watsonx_model()
     if model is None:
-        return text  # fallback
+        return text  # fallback if creds missing
 
     system = (
         "You rewrite user text in a specified tone while keeping the original meaning. "
@@ -86,30 +81,27 @@ Rewrite the following text faithfully to the meaning while adapting the tone:
 
     try:
         result = model.generate_text(prompt=prompt)
-        rewritten = ""
         if isinstance(result, dict):
-            rewritten = result.get("generated_text", "").strip()
-        elif isinstance(result, str):
-            rewritten = result.strip()
+            rewritten = (result.get("generated_text") or "").strip()
+        else:
+            rewritten = (str(result) or "").strip()
         return rewritten if rewritten else text
     except Exception:
         return text
 
 
-def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice", audio_format="mp3") -> bytes:
-    """Synthesizes speech using IBM TTS and returns audio bytes."""
+def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
+    """Synthesizes speech using IBM TTS and returns MP3 bytes."""
     tts = get_tts_client()
     if tts is None or not text.strip():
         st.error("❌ TTS client not initialized or empty text.")
         return b""
 
     try:
-        mime_type = f"audio/{audio_format}"
-        file_ext = audio_format
         res = tts.synthesize(
             text=text.strip(),
             voice=voice,
-            accept=mime_type
+            accept="audio/mp3",
         ).get_result()
         return res.content
     except Exception as e:
@@ -117,7 +109,7 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice", audio_format="
         return b""
 
 
-# ---------- Input Tabs ----------
+# ---------- Input (Tabs) ----------
 tab1, tab2, tab3, tab4 = st.tabs(["Paste text", "Upload .txt", "Upload .pdf", "Upload .docx"])
 
 user_text = ""
@@ -128,27 +120,40 @@ with tab1:
 with tab2:
     uploaded = st.file_uploader("Upload a .txt file", type=["txt"])
     if uploaded is not None:
+        raw = uploaded.read()  # read ONCE
         try:
-            file_text = uploaded.read().decode("utf-8")
+            user_text = raw.decode("utf-8")
         except UnicodeDecodeError:
-            file_text = uploaded.read().decode("latin-1")
-        user_text = file_text
+            # fallback decode; ignore problematic bytes if needed
+            try:
+                user_text = raw.decode("latin-1")
+            except Exception:
+                user_text = raw.decode("utf-8", errors="ignore")
 
 with tab3:
     pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
     if pdf_file is not None:
-        reader = PyPDF2.PdfReader(pdf_file)
-        pdf_text = ""
-        for page in reader.pages:
-            pdf_text += page.extract_text() + "\n"
-        user_text = pdf_text
+        try:
+            reader = PyPDF2.PdfReader(pdf_file)
+            pages = []
+            for page in reader.pages:
+                txt = page.extract_text() or ""
+                pages.append(txt)
+            user_text = "\n".join(pages).strip()
+            if not user_text:
+                st.warning("⚠️ No extractable text found in this PDF (it might be scanned).")
+        except Exception as e:
+            st.error(f"Failed to read PDF: {e}")
 
 with tab4:
     docx_file = st.file_uploader("Upload a Word file", type=["docx"])
     if docx_file is not None:
-        doc = docx.Document(docx_file)
-        doc_text = "\n".join([para.text for para in doc.paragraphs])
-        user_text = doc_text
+        try:
+            doc = Document(docx_file)
+            user_text = "\n".join(p.text for p in doc.paragraphs).strip()
+        except Exception as e:
+            st.error(f"Failed to read DOCX: {e}")
+
 
 # ---------- Options ----------
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
@@ -164,13 +169,14 @@ voice = st.selectbox(
         "en-GB_KateV3Voice",
     ],
     index=0,
-    help="Select voices (more can be added later)."
+    help="Select voices (more can be added later).",
 )
 
-gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not user_text)
+gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not bool(user_text.strip()))
+
 
 # ---------- Processing ----------
-if gen and user_text:
+if gen and user_text.strip():
     with st.spinner("Rewriting with selected tone..."):
         progress_bar = st.progress(0)
         rewritten = rewrite_with_tone(user_text, tone)
@@ -179,13 +185,13 @@ if gen and user_text:
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Original")
-        st.markdown(user_text)
+        st.markdown(user_text if user_text.strip() else "_(empty)_")
     with col2:
         st.subheader(f"{tone} Rewrite")
-        st.markdown(rewritten)
+        st.markdown(rewritten if rewritten.strip() else "_(no changes)_")
 
     with st.spinner("Generating narration..."):
-        audio_bytes = speak_ibm_tts(rewritten, voice=voice, audio_format="mp3")
+        audio_bytes = speak_ibm_tts(rewritten, voice=voice)
         progress_bar.progress(100)
 
     if audio_bytes:
