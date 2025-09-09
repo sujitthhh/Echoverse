@@ -190,18 +190,17 @@ if gen and user_text:
         st.markdown(rewritten)
 
     with st.spinner("Generating narration..."):
-        audio_bytes = speak_ibm_tts(rewritten, voice=voice, audio_format=audio_format)
+        audio_bytes = speak_ibm_tts(rewritten, voice=voice, audio_format="mp3")
         progress_bar.progress(100)
 
     if audio_bytes:
-        st.audio(audio_bytes, format=f"audio/{audio_format}")
+        st.audio(audio_bytes, format="audio/mp3")
         st.download_button(
-            "⬇️ Download Audio",
+            "⬇️ Download MP3",
             data=audio_bytes,
-            file_name=f"echoverse_narration.{audio_format}",
-            mime=f"audio/{audio_format}",
+            file_name="echoverse_narration.mp3",
+            mime="audio/mp3",
         )
         st.success("✅ Audio ready!")
     else:
         st.warning("⚠️ No audio generated. Check your TTS setup.")
-
