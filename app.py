@@ -118,28 +118,34 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice", audio_format="
 
 
 # ---------- Input Tabs ----------
-with st.expander("✍️ Paste Text"):
-    user_text = st.text_area("📖 Enter your text", height=200, placeholder="Type or paste your story/article here...")
+tab1, tab2, tab3, tab4 = st.tabs(["Paste text", "Upload .txt", "Upload .pdf", "Upload .docx"])
 
-with st.expander("📂 Upload .txt File"):
+user_text = ""
+
+with tab1:
+    user_text = st.text_area("Enter your text", height=200, placeholder="Type or paste your story/article here...")
+
+with tab2:
     uploaded = st.file_uploader("Upload a .txt file", type=["txt"])
-    if uploaded:
+    if uploaded is not None:
         try:
             file_text = uploaded.read().decode("utf-8")
         except UnicodeDecodeError:
             file_text = uploaded.read().decode("latin-1")
         user_text = file_text
 
-with st.expander("📄 Upload PDF"):
+with tab3:
     pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
-    if pdf_file:
+    if pdf_file is not None:
         reader = PyPDF2.PdfReader(pdf_file)
-        pdf_text = "".join([page.extract_text() for page in reader.pages])
+        pdf_text = ""
+        for page in reader.pages:
+            pdf_text += page.extract_text() + "\n"
         user_text = pdf_text
 
-with st.expander("📘 Upload Word (.docx)"):
+with tab4:
     docx_file = st.file_uploader("Upload a Word file", type=["docx"])
-    if docx_file:
+    if docx_file is not None:
         doc = docx.Document(docx_file)
         doc_text = "\n".join([para.text for para in doc.paragraphs])
         user_text = doc_text
