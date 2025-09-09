@@ -123,7 +123,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["Paste text", "Upload .txt", "Upload .pdf", "U
 user_text = ""
 
 with tab1:
-    user_text = st.text_area("📖 Enter your text", height=200, placeholder="Type or paste your story/article here...")
+    user_text = st.text_area("Enter your text", height=200, placeholder="Type or paste your story/article here...")
 
 with tab2:
     uploaded = st.file_uploader("Upload a .txt file", type=["txt"])
