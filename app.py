@@ -170,8 +170,6 @@ voice = st.selectbox(
     help="Select voices (more can be added later)."
 )
 
-audio_format = st.radio("🎵 Audio format", ["mp3"], index=0)
-
 gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not user_text)
 
 # ---------- Processing ----------
