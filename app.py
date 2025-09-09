@@ -174,18 +174,12 @@ audio_format = st.radio("🎵 Audio format", ["mp3", "wav"], index=0)
 
 gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not user_text)
 
-
 # ---------- Processing ----------
 if gen and user_text:
     with st.spinner("Rewriting with selected tone..."):
         progress_bar = st.progress(0)
         rewritten = rewrite_with_tone(user_text, tone)
-        progress_bar.progress(40)
-
-    if lang != "None":
-        with st.spinner(f"Translating to {lang}..."):
-            rewritten = GoogleTranslator(source="auto", target=lang).translate(rewritten)
-            progress_bar.progress(60)
+        progress_bar.progress(50)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -210,3 +204,4 @@ if gen and user_text:
         st.success("✅ Audio ready!")
     else:
         st.warning("⚠️ No audio generated. Check your TTS setup.")
+
