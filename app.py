@@ -30,41 +30,30 @@ TTS_URL = os.getenv("TTS_URL", "https://api.us-south.text-to-speech.watson.cloud
 # ---------- Helpers ----------
 @st.cache_resource(show_spinner=False)
 def get_watsonx_model():
-    try:
-        if not (WX_API_KEY and WX_URL and WX_PROJECT_ID):
-            st.warning("⚠️ Watsonx credentials are missing. Please set them in your .env file.")
-            return None
-        creds = Credentials(api_key=WX_API_KEY, url=WX_URL)
-        return Model(
-            model_id="ibm/granite-13b-instruct-v2",
-            params={"max_new_tokens": 400, "temperature": 0.7, "decoding_method": "sample"},
-            credentials=creds,
-            project_id=WX_PROJECT_ID,
-        )
-    except Exception as e:
-        st.error(f"Watsonx model error: {e}")
+    if not (WX_API_KEY and WX_URL and WX_PROJECT_ID):
         return None
+    creds = Credentials(api_key=WX_API_KEY, url=WX_URL)
+    return Model(
+        model_id="ibm/granite-13b-instruct-v2",
+        params={"max_new_tokens": 400, "temperature": 0.7, "decoding_method": "sample"},
+        credentials=creds,
+        project_id=WX_PROJECT_ID,
+    )
 
 @st.cache_resource(show_spinner=False)
 def get_tts_client():
-    try:
-        if not (TTS_API_KEY and TTS_URL):
-            st.warning("⚠️ IBM TTS credentials are missing. Please set them in your .env file.")
-            return None
-        auth = IAMAuthenticator(TTS_API_KEY)
-        client = TextToSpeechV1(authenticator=auth)
-        client.set_service_url(TTS_URL)
-        return client
-    except Exception as e:
-        st.error(f"TTS client error: {e}")
+    if not (TTS_API_KEY and TTS_URL):
         return None
+    auth = IAMAuthenticator(TTS_API_KEY)
+    client = TextToSpeechV1(authenticator=auth)
+    client.set_service_url(TTS_URL)
+    return client
 
 def rewrite_with_tone(text: str, tone: str) -> str:
     """Rewrite English text in a specific tone."""
     model = get_watsonx_model()
     if model is None:
         return text
-
     tone_instructions = {
         "Neutral": "Use a neutral, clear, informative tone.",
         "Suspenseful": "Increase tension and anticipation; vary sentence length; end some lines with hooks.",
@@ -82,11 +71,8 @@ TONE NOTES: {tone_instructions[tone]}
 """
     try:
         result = model.generate_text(prompt=prompt)
-        if isinstance(result, dict):
-            return (result.get("generated_text") or "").strip()
-        return str(result).strip()
-    except Exception as e:
-        st.error(f"Rewrite error: {e}")
+        return (result.get("generated_text") or "").strip() if isinstance(result, dict) else str(result).strip()
+    except Exception:
         return text
 
 def translate_text(text: str, target_lang: str) -> str:
@@ -94,7 +80,6 @@ def translate_text(text: str, target_lang: str) -> str:
     model = get_watsonx_model()
     if model is None:
         return text
-
     prompt = f"""
 You are a professional translator. Translate the following English text into {target_lang}.
 Keep meaning faithful and natural for audiobook narration.
@@ -106,11 +91,8 @@ Do not explain or add comments, only give translated text.
 """
     try:
         result = model.generate_text(prompt=prompt)
-        if isinstance(result, dict):
-            return (result.get("generated_text") or "").strip()
-        return str(result).strip()
-    except Exception as e:
-        st.error(f"Translation error: {e}")
+        return (result.get("generated_text") or "").strip() if isinstance(result, dict) else str(result).strip()
+    except Exception:
         return text
 
 def speak_ibm_tts(text: str, voice: str) -> bytes:
@@ -121,8 +103,7 @@ def speak_ibm_tts(text: str, voice: str) -> bytes:
     try:
         res = tts.synthesize(text=text.strip(), voice=voice, accept="audio/mp3").get_result()
         return res.content
-    except Exception as e:
-        st.error(f"TTS error: {e}")
+    except Exception:
         return b""
 
 # ---------- Input ----------
@@ -154,9 +135,8 @@ if "history" not in st.session_state:
 
 # ---------- Processing ----------
 if gen and user_text.strip():
-    progress_bar = st.progress(0)
-
     with st.spinner("Rewriting in chosen tone..."):
+        progress_bar = st.progress(0)
         rewritten = rewrite_with_tone(user_text, tone)
         progress_bar.progress(30)
 
@@ -186,8 +166,6 @@ if gen and user_text.strip():
             "audio": audio_bytes
         })
         st.success("✅ Audiobook ready!")
-    else:
-        st.error("❌ Failed to generate audio. Please check your IBM TTS credentials and voice settings.")
 
 # ---------- History Display ----------
 if st.session_state.history:
@@ -213,3 +191,4 @@ if st.session_state.history:
                 file_name=f"echoverse_history_{i}.mp3",
                 mime="audio/mp3"
             )
+
