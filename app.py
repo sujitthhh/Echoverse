@@ -87,14 +87,14 @@ def speak_ibm_tts(text: str, voice: str) -> bytes:
     tts = get_tts_client()
     if tts is None:
         st.warning("⚠️ TTS not configured")
-        return b""
+        return "b"
     try:
         res = tts.synthesize(text=text, voice=voice, accept="audio/mp3").get_result()
         st.success(f"✅ TTS generated {len(res.content)} bytes")  # 👈 Debug
         return res.content
     except Exception as e:
         st.error(f"❌ TTS error with voice {voice}: {e}")
-        return b""
+        return "b"
 
 
 # ---------- Input (Text + Files) ----------
