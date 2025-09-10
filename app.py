@@ -17,7 +17,7 @@ from ibm_watsonx_ai.foundation_models import Model
 load_dotenv()
 st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="wide")
 
-st.title("🎧 EchoVerse - AI Audiobook Creator (By TechElite)")
+st.title("🎧 EchoVerse - AI Audiobook Creater")
 st.caption("Paste or upload text → choose tone → choose voice → listen or download.")
 
 # ---------- Credentials ----------
@@ -205,7 +205,7 @@ if gen and user_text.strip():
         st.success("✅ Your Audio is Ready!")
     else:
         st.warning("⚠️ No audio generated. Check your TTS setup.")
-        
+
 # --- Footer ---
 st.markdown("""
     <div style="text-align:center; color:gray; font-size:13px; margin-top:30px;">
