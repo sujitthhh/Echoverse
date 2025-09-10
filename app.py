@@ -17,7 +17,7 @@ from ibm_watsonx_ai.foundation_models import Model
 load_dotenv()
 st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="wide")
 
-st.title("🎧 EchoVerse - AI Audiobook Creater")
+st.title("🎧 EchoVerse - AI Audiobook Creator")
 st.caption("Paste or upload text → choose tone → choose voice → listen or download.")
 
 # ---------- Credentials ----------
@@ -120,11 +120,10 @@ with tab1:
 with tab2:
     uploaded = st.file_uploader("Upload a .txt file", type=["txt"])
     if uploaded is not None:
-        raw = uploaded.read()  # read ONCE
+        raw = uploaded.read()
         try:
             user_text = raw.decode("utf-8")
         except UnicodeDecodeError:
-            # fallback decode; ignore problematic bytes if needed
             try:
                 user_text = raw.decode("latin-1")
             except Exception:
@@ -135,10 +134,7 @@ with tab3:
     if pdf_file is not None:
         try:
             reader = PyPDF2.PdfReader(pdf_file)
-            pages = []
-            for page in reader.pages:
-                txt = page.extract_text() or ""
-                pages.append(txt)
+            pages = [page.extract_text() or "" for page in reader.pages]
             user_text = "\n".join(pages).strip()
             if not user_text:
                 st.warning("⚠️ No extractable text found in this PDF (it might be scanned).")
@@ -175,6 +171,11 @@ voice = st.selectbox(
 gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not bool(user_text.strip()))
 
 
+# ---------- History Storage ----------
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+
 # ---------- Processing ----------
 if gen and user_text.strip():
     with st.spinner("Rewriting with selected tone..."):
@@ -182,29 +183,43 @@ if gen and user_text.strip():
         rewritten = rewrite_with_tone(user_text, tone)
         progress_bar.progress(50)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Original")
-        st.markdown(user_text if user_text.strip() else "_(empty)_")
-    with col2:
-        st.subheader(f"{tone} Rewrite")
-        st.markdown(rewritten if rewritten.strip() else "_(no changes)_")
-
     with st.spinner("Generating narration..."):
         audio_bytes = speak_ibm_tts(rewritten, voice=voice)
         progress_bar.progress(100)
 
     if audio_bytes:
-        st.audio(audio_bytes, format="audio/mp3")
-        st.download_button(
-            "⬇️ Download MP3",
-            data=audio_bytes,
-            file_name="echoverse_narration.mp3",
-            mime="audio/mp3",
-        )
+        # Save to history
+        st.session_state.history.append({
+            "original": user_text,
+            "rewritten": rewritten,
+            "tone": tone,
+            "voice": voice,
+            "audio": audio_bytes
+        })
+
         st.success("✅ Your Audio is Ready!")
-    else:
-        st.warning("⚠️ No audio generated. Check your TTS setup.")
+
+# ---------- Display History ----------
+if st.session_state.history:
+    st.subheader("📜 History")
+    for i, item in enumerate(reversed(st.session_state.history), start=1):
+        with st.expander(f"{i}. {item['tone']} | {item['voice']}"):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("**Original**")
+                st.markdown(item["original"][:500] + ("..." if len(item["original"]) > 500 else ""))
+            with col2:
+                st.markdown(f"**{item['tone']} Rewrite**")
+                st.markdown(item["rewritten"][:500] + ("..." if len(item["rewritten"]) > 500 else ""))
+
+            st.audio(item["audio"], format="audio/mp3")
+            st.download_button(
+                f"⬇️ Download Narration {i}",
+                data=item["audio"],
+                file_name=f"echoverse_history_{i}.mp3",
+                mime="audio/mp3",
+            )
+
 
 # --- Footer ---
 st.markdown("""
