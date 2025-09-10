@@ -18,7 +18,8 @@ load_dotenv()
 st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="wide")
 
 st.title("🎧 EchoVerse - AI Audiobook Creator")
-st.caption("Paste or upload text → choose tone → choose voice → listen or download.")
+st.caption("Paste or upload text → choose tone → choose language/voice → listen or download.")
+
 
 # ---------- Credentials ----------
 WX_API_KEY = os.getenv("WATSONX_API_KEY")
@@ -111,7 +112,6 @@ def speak_ibm_tts(text: str, voice: str = "en-US_AllisonV3Voice") -> bytes:
 
 # ---------- Input (Tabs) ----------
 tab1, tab2, tab3, tab4 = st.tabs(["Paste text", "Upload .txt", "Upload .pdf", "Upload .docx"])
-
 user_text = ""
 
 with tab1:
@@ -154,6 +154,7 @@ with tab4:
 # ---------- Options ----------
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
 
+
 # ---------- Translation Helper ----------
 def translate_text(text: str, target_lang: str) -> str:
     """Translate English text into the target language using Watsonx model."""
@@ -182,7 +183,7 @@ def translate_text(text: str, target_lang: str) -> str:
         return text
 
 
-# Available languages & voices
+# ---------- Languages & Voices ----------
 languages = {
     "English (US)": ["en-US_AllisonV3Voice", "en-US_LisaV3Voice", "en-US_MichaelV3Voice"],
     "English (UK)": ["en-GB_CharlotteV3Voice", "en-GB_JamesV3Voice", "en-GB_KateV3Voice"],
@@ -196,29 +197,8 @@ languages = {
 }
 
 lang = st.selectbox("🌍 Choose language", list(languages.keys()))
-
-voice = st.selectbox(
-    "🗣️ Choose voice",
-    languages[lang],
-    index=0,
-    help="Select a voice available for this language."
-)
-
+voice = st.selectbox("🗣️ Choose voice", languages[lang], index=0)
 gen = st.button("✨ Rewrite, Translate & Generate Audio", type="primary", disabled=not bool(user_text.strip()))
-
-
-# Language dropdown
-lang = st.selectbox("🌍 Choose language", list(languages.keys()))
-
-# Voices update dynamically based on selected language
-voice = st.selectbox(
-    "🗣️ Choose voice",
-    languages[lang],
-    index=0,
-    help="Select a voice available for this language."
-)
-
-gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not bool(user_text.strip()))
 
 
 # ---------- History Storage ----------
@@ -233,7 +213,7 @@ if gen and user_text.strip():
         rewritten = rewrite_with_tone(user_text, tone)
         progress_bar.progress(30)
 
-    # If language is not English → translate
+    # Translate if non-English
     final_text = rewritten
     if not lang.startswith("English"):
         with st.spinner(f"Translating into {lang}..."):
@@ -268,18 +248,23 @@ if gen and user_text.strip():
 
         st.success("✅ Your Audio is Ready!")
 
+
 # ---------- Display History ----------
 if st.session_state.history:
+    st.markdown("---")
     st.subheader("📜 History")
+
     for i, item in enumerate(reversed(st.session_state.history), start=1):
-        with st.expander(f"{i}. {item['tone']} | {item['voice']}"):
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown("**Original**")
-                st.markdown(item["original"][:500] + ("..." if len(item["original"]) > 500 else ""))
-            with col2:
-                st.markdown(f"**{item['tone']} Rewrite**")
-                st.markdown(item["rewritten"][:500] + ("..." if len(item["rewritten"]) > 500 else ""))
+        with st.expander(f"{i}. {item['tone']} | {item['language']} | {item['voice']}"):
+            st.markdown("**Original (English)**")
+            st.markdown(item["original"][:500] + ("..." if len(item["original"]) > 500 else ""))
+
+            st.markdown(f"**Rewritten ({item['tone']})**")
+            st.markdown(item["rewritten"][:500] + ("..." if len(item["rewritten"]) > 500 else ""))
+
+            if not item["language"].startswith("English"):
+                st.markdown(f"**Translated → {item['language']}**")
+                st.markdown(item["translated"][:500] + ("..." if len(item["translated"]) > 500 else ""))
 
             st.audio(item["audio"], format="audio/mp3")
             st.download_button(
@@ -295,4 +280,5 @@ st.markdown("""
     <div style="text-align:center; color:gray; font-size:13px; margin-top:30px;">
          | By <b>TechElite</b>
     </div>
-""", unsafe_allow_html=True)  
+""", unsafe_allow_html=True)
+  
