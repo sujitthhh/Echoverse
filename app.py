@@ -15,7 +15,7 @@ from ibm_watsonx_ai.foundation_models import Model
 
 # ---------- Setup ----------
 load_dotenv()
-st.set_page_config(page_title="EchoVerse", page_icon="🎧")
+st.set_page_config(page_title="EchoVerse", page_icon="🎧", layout="wide")
 
 st.title("🎧 EchoVerse - AI Audiobook Creator (By TechElite)")
 st.caption("Paste or upload text → choose tone → choose voice → listen or download.")
