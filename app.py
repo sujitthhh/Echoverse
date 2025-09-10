@@ -106,8 +106,30 @@ def speak_ibm_tts(text: str, voice: str) -> bytes:
     except Exception:
         return b""
 
-# ---------- Input ----------
-user_text = st.text_area("✍️ Enter text in English", height=200, placeholder="Type or paste your English text here...")
+# ---------- Input (Text + Files) ----------
+tab1, tab2, tab3, tab4 = st.tabs(["✍️ Enter text", "📄 Upload TXT", "📘 Upload PDF", "📝 Upload DOCX"])
+user_text = ""
+
+with tab1:
+    user_text = st.text_area("Enter English text", height=200, placeholder="Type or paste your English text here...")
+
+with tab2:
+    txt_file = st.file_uploader("Upload a .txt file", type=["txt"])
+    if txt_file:
+        user_text = txt_file.read().decode("utf-8", errors="ignore")
+
+with tab3:
+    pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+    if pdf_file:
+        reader = PyPDF2.PdfReader(pdf_file)
+        pages = [page.extract_text() or "" for page in reader.pages]
+        user_text = "\n".join(pages).strip()
+
+with tab4:
+    docx_file = st.file_uploader("Upload a Word file", type=["docx"])
+    if docx_file:
+        doc = Document(docx_file)
+        user_text = "\n".join([p.text for p in doc.paragraphs]).strip()
 
 # ---------- Options ----------
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
@@ -191,4 +213,3 @@ if st.session_state.history:
                 file_name=f"echoverse_history_{i}.mp3",
                 mime="audio/mp3"
             )
-
