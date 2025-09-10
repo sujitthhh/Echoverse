@@ -50,13 +50,15 @@ def get_tts_client():
     return client
 
 def rewrite_with_tone(text: str, tone: str) -> str:
+    if not text.strip():
+        return text
     model = get_watsonx_model()
     if model is None:
         st.warning("⚠️ Watsonx model not configured")
         return text
     try:
         result = model.generate_text(prompt=f"Rewrite in {tone} tone:\n{text}")
-        st.write("🔍 Watsonx raw rewrite result:", result)  # 👈 Debug
+        # st.write("🔍 Watsonx raw rewrite result:", result)  # Debug
         if isinstance(result, dict):
             return (result.get("generated_text") or "").strip()
         return str(result).strip()
@@ -64,17 +66,16 @@ def rewrite_with_tone(text: str, tone: str) -> str:
         st.error(f"❌ Rewrite error: {e}")
         return text
 
-
 def translate_text(text: str, target_lang: str) -> str:
+    if not text.strip():
+        return text
     model = get_watsonx_model()
     if model is None:
         st.warning("⚠️ Watsonx model not configured for translation")
         return text
     try:
-        result = model.generate_text(
-            prompt=f"Translate into {target_lang}:\n{text}"
-        )
-        st.write("🔍 Watsonx raw translation result:", result)  # 👈 Debug
+        result = model.generate_text(prompt=f"Translate into {target_lang}:\n{text}")
+        # st.write("🔍 Watsonx raw translation result:", result)  # Debug
         if isinstance(result, dict):
             return (result.get("generated_text") or "").strip()
         return str(result).strip()
@@ -82,20 +83,21 @@ def translate_text(text: str, target_lang: str) -> str:
         st.error(f"❌ Translation error: {e}")
         return text
 
-
 def speak_ibm_tts(text: str, voice: str) -> bytes:
+    if not text.strip():
+        st.error("⚠️ No text provided for TTS")
+        return b""
     tts = get_tts_client()
     if tts is None:
         st.warning("⚠️ TTS not configured")
-        return "b"
+        return b""
     try:
         res = tts.synthesize(text=text, voice=voice, accept="audio/mp3").get_result()
-        st.success(f"✅ TTS generated {len(res.content)} bytes")  # 👈 Debug
+        st.success(f"✅ TTS generated {len(res.content)} bytes")
         return res.content
     except Exception as e:
         st.error(f"❌ TTS error with voice {voice}: {e}")
-        return "b"
-
+        return b""
 
 # ---------- Input (Text + Files) ----------
 tab1, tab2, tab3, tab4 = st.tabs(["✍️ Enter text", "📄 Upload TXT", "📘 Upload PDF", "📝 Upload DOCX"])
@@ -107,7 +109,7 @@ with tab1:
 with tab2:
     txt_file = st.file_uploader("Upload a .txt file", type=["txt"])
     if txt_file:
-        user_text = txt_file.read().decode("utf-8", errors="ignore")
+        user_text = txt_file.read().decode("utf-8", errors="ignore").strip()
 
 with tab3:
     pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
