@@ -154,18 +154,53 @@ with tab4:
 # ---------- Options ----------
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
 
-voice = st.selectbox(
-    "🗣️ Choose voice",
-    [
+# Available languages & voices
+languages = {
+    "English (US)": [
         "en-US_AllisonV3Voice",
         "en-US_LisaV3Voice",
         "en-US_MichaelV3Voice",
+    ],
+    "English (UK)": [
         "en-GB_CharlotteV3Voice",
         "en-GB_JamesV3Voice",
         "en-GB_KateV3Voice",
     ],
+    "Spanish": [
+        "es-ES_EnriqueV3Voice",
+        "es-ES_LauraV3Voice",
+        "es-LA_SofiaV3Voice",
+    ],
+    "French": [
+        "fr-FR_ReneeV3Voice",
+    ],
+    "German": [
+        "de-DE_DieterV3Voice",
+        "de-DE_BirgitV3Voice",
+    ],
+    "Italian": [
+        "it-IT_FrancescaV3Voice",
+    ],
+    "Portuguese (Brazil)": [
+        "pt-BR_IsabelaV3Voice",
+    ],
+    "Japanese": [
+        "ja-JP_EmiV3Voice",
+    ],
+    "Arabic": [
+        "ar-MS_OmarVoice",
+    ]
+}
+
+# Language dropdown
+lang = st.selectbox("🌍 Choose language", list(languages.keys()))
+
+# Voices update dynamically based on selected language
+voice = st.selectbox(
+    "🗣️ Choose voice",
+    languages[lang],
     index=0,
-    help="Select voices (more can be added later).",
+    help="Select a voice available for this language."
 )
 
 gen = st.button("✨ Rewrite & Generate Audio", type="primary", disabled=not bool(user_text.strip()))
