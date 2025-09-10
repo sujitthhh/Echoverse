@@ -50,61 +50,52 @@ def get_tts_client():
     return client
 
 def rewrite_with_tone(text: str, tone: str) -> str:
-    """Rewrite English text in a specific tone."""
     model = get_watsonx_model()
     if model is None:
+        st.warning("⚠️ Watsonx model not configured")
         return text
-    tone_instructions = {
-        "Neutral": "Use a neutral, clear, informative tone.",
-        "Suspenseful": "Increase tension and anticipation; vary sentence length; end some lines with hooks.",
-        "Inspiring": "Make it uplifting and motivational; use energetic, positive language.",
-    }
-    prompt = f"""
-You rewrite user text in English in a {tone} tone.
-Keep meaning faithful and concise for narration.
-
-TONE NOTES: {tone_instructions[tone]}
-
-<<<TEXT>>>
-{text}
-<<<END>>>
-"""
     try:
-        result = model.generate_text(prompt=prompt)
-        return (result.get("generated_text") or "").strip() if isinstance(result, dict) else str(result).strip()
-    except Exception:
+        result = model.generate_text(prompt=f"Rewrite in {tone} tone:\n{text}")
+        st.write("🔍 Watsonx raw rewrite result:", result)  # 👈 Debug
+        if isinstance(result, dict):
+            return (result.get("generated_text") or "").strip()
+        return str(result).strip()
+    except Exception as e:
+        st.error(f"❌ Rewrite error: {e}")
         return text
+
 
 def translate_text(text: str, target_lang: str) -> str:
-    """Translate rewritten English text into target language."""
     model = get_watsonx_model()
     if model is None:
+        st.warning("⚠️ Watsonx model not configured for translation")
         return text
-    prompt = f"""
-You are a professional translator. Translate the following English text into {target_lang}.
-Keep meaning faithful and natural for audiobook narration.
-Do not explain or add comments, only give translated text.
-
-<<<TEXT>>>
-{text}
-<<<END>>>
-"""
     try:
-        result = model.generate_text(prompt=prompt)
-        return (result.get("generated_text") or "").strip() if isinstance(result, dict) else str(result).strip()
-    except Exception:
+        result = model.generate_text(
+            prompt=f"Translate into {target_lang}:\n{text}"
+        )
+        st.write("🔍 Watsonx raw translation result:", result)  # 👈 Debug
+        if isinstance(result, dict):
+            return (result.get("generated_text") or "").strip()
+        return str(result).strip()
+    except Exception as e:
+        st.error(f"❌ Translation error: {e}")
         return text
+
 
 def speak_ibm_tts(text: str, voice: str) -> bytes:
-    """Generate speech in chosen voice."""
     tts = get_tts_client()
-    if tts is None or not text.strip():
+    if tts is None:
+        st.warning("⚠️ TTS not configured")
         return b""
     try:
-        res = tts.synthesize(text=text.strip(), voice=voice, accept="audio/mp3").get_result()
+        res = tts.synthesize(text=text, voice=voice, accept="audio/mp3").get_result()
+        st.success(f"✅ TTS generated {len(res.content)} bytes")  # 👈 Debug
         return res.content
-    except Exception:
+    except Exception as e:
+        st.error(f"❌ TTS error with voice {voice}: {e}")
         return b""
+
 
 # ---------- Input (Text + Files) ----------
 tab1, tab2, tab3, tab4 = st.tabs(["✍️ Enter text", "📄 Upload TXT", "📘 Upload PDF", "📝 Upload DOCX"])
