@@ -205,3 +205,10 @@ if gen and user_text.strip():
         st.success("✅ Your Audio is Ready!")
     else:
         st.warning("⚠️ No audio generated. Check your TTS setup.")
+        
+# --- Footer ---
+st.markdown("""
+    <div style="text-align:center; color:gray; font-size:13px; margin-top:30px;">
+         | By <b>TechElite</b>
+    </div>
+""", unsafe_allow_html=True)
