@@ -50,41 +50,26 @@ def get_tts_client():
     return client
 
 def rewrite_with_tone(text: str, tone: str) -> str:
-    """Rewrite English text in a specific tone."""
     model = get_watsonx_model()
     if model is None:
         return text + " (⚠️ Watsonx not configured, showing original)"
 
-    tone_instructions = {
-        "Neutral": "Use a neutral, clear, informative tone.",
-        "Suspenseful": "Increase tension and anticipation.",
-        "Inspiring": "Make it uplifting and motivational.",
-    }
-
-    prompt = f"""
-Rewrite the following English text in a {tone} tone.
-TONE NOTES: {tone_instructions[tone]}
-
-<<<TEXT>>>
-{text}
-<<<END>>>
-"""
-
     try:
-        result = model.generate_text(prompt=prompt)
-
-        # Debugging: show response in Streamlit
-        st.write("🔎 Watsonx Response:", result)
+        result = model.generate_text(prompt=text)
+        st.write("Raw Watsonx Response:", result)  # 👈 Show full output
 
         if isinstance(result, dict):
-            return (result.get("generated_text") or "").strip()
+            rewritten = result.get("generated_text", "").strip()
+            if not rewritten:
+                raise ValueError("Watsonx returned empty text.")
+            return rewritten
         elif isinstance(result, str):
             return result.strip()
         else:
             return str(result).strip()
 
     except Exception as e:
-        st.error(f"❌ Error rewriting text: {e}")
+        st.error(f"❌ Watsonx Error: {e}")
         return text + " (⚠️ Rewrite failed)"
 
 
