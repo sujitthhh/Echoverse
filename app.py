@@ -57,8 +57,7 @@ def rewrite_with_tone(text: str, tone: str) -> str:
         st.warning("⚠️ Watsonx model not configured")
         return text
     try:
-        result = model.generate_text(prompt=f"Rewrite in {tone} tone:\n{text}")
-        # st.write("🔍 Watsonx raw rewrite result:", result)  # Debug
+        result = model.generate_text(prompt=f"Rewrite the following text in a {tone} tone:\n\n{text}")
         if isinstance(result, dict):
             return (result.get("generated_text") or "").strip()
         return str(result).strip()
@@ -74,8 +73,7 @@ def translate_text(text: str, target_lang: str) -> str:
         st.warning("⚠️ Watsonx model not configured for translation")
         return text
     try:
-        result = model.generate_text(prompt=f"Translate into {target_lang}:\n{text}")
-        # st.write("🔍 Watsonx raw translation result:", result)  # Debug
+        result = model.generate_text(prompt=f"Translate this text into {target_lang}:\n\n{text}")
         if isinstance(result, dict):
             return (result.get("generated_text") or "").strip()
         return str(result).strip()
@@ -93,7 +91,6 @@ def speak_ibm_tts(text: str, voice: str) -> bytes:
         return b""
     try:
         res = tts.synthesize(text=text, voice=voice, accept="audio/mp3").get_result()
-        st.success(f"✅ TTS generated {len(res.content)} bytes")
         return res.content
     except Exception as e:
         st.error(f"❌ TTS error with voice {voice}: {e}")
@@ -150,14 +147,15 @@ if "history" not in st.session_state:
 
 # ---------- Processing ----------
 if gen and user_text.strip():
-    with st.spinner("Rewriting in chosen tone..."):
-        progress_bar = st.progress(0)
+    progress_bar = st.progress(0)
+
+    with st.spinner("Rewriting text..."):
         rewritten = rewrite_with_tone(user_text, tone)
         progress_bar.progress(30)
 
     final_text = rewritten
     if not lang.startswith("English"):
-        with st.spinner(f"Translating English → {lang}..."):
+        with st.spinner(f"Translating to {lang}..."):
             final_text = translate_text(rewritten, lang)
         progress_bar.progress(60)
     else:
