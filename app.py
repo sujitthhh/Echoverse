@@ -154,43 +154,58 @@ with tab4:
 # ---------- Options ----------
 tone = st.selectbox("🎚️ Choose tone", ["Neutral", "Suspenseful", "Inspiring"])
 
+# ---------- Translation Helper ----------
+def translate_text(text: str, target_lang: str) -> str:
+    """Translate English text into the target language using Watsonx model."""
+    model = get_watsonx_model()
+    if model is None:
+        return text  # fallback if creds missing
+
+    prompt = f"""
+    You are a professional translator. Translate the following English text into {target_lang}.
+    Keep the meaning faithful and suitable for audiobook narration. 
+    Do not add explanations, just return the translated text.
+
+    <<<TEXT>>>
+    {text}
+    <<<END>>>
+    """
+
+    try:
+        result = model.generate_text(prompt=prompt)
+        if isinstance(result, dict):
+            translated = (result.get("generated_text") or "").strip()
+        else:
+            translated = (str(result) or "").strip()
+        return translated if translated else text
+    except Exception:
+        return text
+
+
 # Available languages & voices
 languages = {
-    "English (US)": [
-        "en-US_AllisonV3Voice",
-        "en-US_LisaV3Voice",
-        "en-US_MichaelV3Voice",
-    ],
-    "English (UK)": [
-        "en-GB_CharlotteV3Voice",
-        "en-GB_JamesV3Voice",
-        "en-GB_KateV3Voice",
-    ],
-    "Spanish": [
-        "es-ES_EnriqueV3Voice",
-        "es-ES_LauraV3Voice",
-        "es-LA_SofiaV3Voice",
-    ],
-    "French": [
-        "fr-FR_ReneeV3Voice",
-    ],
-    "German": [
-        "de-DE_DieterV3Voice",
-        "de-DE_BirgitV3Voice",
-    ],
-    "Italian": [
-        "it-IT_FrancescaV3Voice",
-    ],
-    "Portuguese (Brazil)": [
-        "pt-BR_IsabelaV3Voice",
-    ],
-    "Japanese": [
-        "ja-JP_EmiV3Voice",
-    ],
-    "Arabic": [
-        "ar-MS_OmarVoice",
-    ]
+    "English (US)": ["en-US_AllisonV3Voice", "en-US_LisaV3Voice", "en-US_MichaelV3Voice"],
+    "English (UK)": ["en-GB_CharlotteV3Voice", "en-GB_JamesV3Voice", "en-GB_KateV3Voice"],
+    "Spanish": ["es-ES_EnriqueV3Voice", "es-ES_LauraV3Voice", "es-LA_SofiaV3Voice"],
+    "French": ["fr-FR_ReneeV3Voice"],
+    "German": ["de-DE_DieterV3Voice", "de-DE_BirgitV3Voice"],
+    "Italian": ["it-IT_FrancescaV3Voice"],
+    "Portuguese (Brazil)": ["pt-BR_IsabelaV3Voice"],
+    "Japanese": ["ja-JP_EmiV3Voice"],
+    "Arabic": ["ar-MS_OmarVoice"]
 }
+
+lang = st.selectbox("🌍 Choose language", list(languages.keys()))
+
+voice = st.selectbox(
+    "🗣️ Choose voice",
+    languages[lang],
+    index=0,
+    help="Select a voice available for this language."
+)
+
+gen = st.button("✨ Rewrite, Translate & Generate Audio", type="primary", disabled=not bool(user_text.strip()))
+
 
 # Language dropdown
 lang = st.selectbox("🌍 Choose language", list(languages.keys()))
@@ -216,24 +231,36 @@ if gen and user_text.strip():
     with st.spinner("Rewriting with selected tone..."):
         progress_bar = st.progress(0)
         rewritten = rewrite_with_tone(user_text, tone)
-        progress_bar.progress(50)
+        progress_bar.progress(30)
+
+    # If language is not English → translate
+    final_text = rewritten
+    if not lang.startswith("English"):
+        with st.spinner(f"Translating into {lang}..."):
+            final_text = translate_text(rewritten, lang)
+        progress_bar.progress(60)
+    else:
+        progress_bar.progress(60)
 
     with st.spinner("Generating narration..."):
-        audio_bytes = speak_ibm_tts(rewritten, voice=voice)
+        audio_bytes = speak_ibm_tts(final_text, voice=voice)
         progress_bar.progress(100)
 
-    if audio_bytes: 
-        st.audio(audio_bytes, format="audio/mp3") 
-        st.download_button( "⬇️ Download MP3", 
-                           data=audio_bytes, 
-                           file_name="echoverse_narration.mp3", 
-                           mime="audio/mp3",)
-
     if audio_bytes:
+        st.audio(audio_bytes, format="audio/mp3")
+        st.download_button(
+            "⬇️ Download MP3",
+            data=audio_bytes,
+            file_name="echoverse_narration.mp3",
+            mime="audio/mp3",
+        )
+
         # Save to history
         st.session_state.history.append({
             "original": user_text,
             "rewritten": rewritten,
+            "translated": final_text,
+            "language": lang,
             "tone": tone,
             "voice": voice,
             "audio": audio_bytes
