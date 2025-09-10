@@ -53,27 +53,73 @@ def rewrite_with_tone(text: str, tone: str) -> str:
     """Rewrite English text in a specific tone."""
     model = get_watsonx_model()
     if model is None:
-        return text
+        return text + " (⚠️ Watsonx not configured, showing original)"
+
     tone_instructions = {
         "Neutral": "Use a neutral, clear, informative tone.",
-        "Suspenseful": "Increase tension and anticipation; vary sentence length; end some lines with hooks.",
-        "Inspiring": "Make it uplifting and motivational; use energetic, positive language.",
+        "Suspenseful": "Increase tension and anticipation.",
+        "Inspiring": "Make it uplifting and motivational.",
     }
-    prompt = f"""
-You rewrite user text in English in a {tone} tone.
-Keep meaning faithful and concise for narration.
 
+    prompt = f"""
+Rewrite the following English text in a {tone} tone.
 TONE NOTES: {tone_instructions[tone]}
 
 <<<TEXT>>>
 {text}
 <<<END>>>
 """
+
     try:
         result = model.generate_text(prompt=prompt)
-        return (result.get("generated_text") or "").strip() if isinstance(result, dict) else str(result).strip()
-    except Exception:
-        return text
+
+        # Debugging: show response in Streamlit
+        st.write("🔎 Watsonx Response:", result)
+
+        if isinstance(result, dict):
+            return (result.get("generated_text") or "").strip()
+        elif isinstance(result, str):
+            return result.strip()
+        else:
+            return str(result).strip()
+
+    except Exception as e:
+        st.error(f"❌ Error rewriting text: {e}")
+        return text + " (⚠️ Rewrite failed)"
+
+
+def translate_text(text: str, target_lang: str) -> str:
+    """Translate rewritten English text into target language."""
+    model = get_watsonx_model()
+    if model is None:
+        return text + f" (⚠️ Watsonx not configured, kept in English)"
+
+    prompt = f"""
+Translate this English text into {target_lang} for audiobook narration.
+Do not explain or add comments, only give translated text.
+
+<<<TEXT>>>
+{text}
+<<<END>>>
+"""
+
+    try:
+        result = model.generate_text(prompt=prompt)
+
+        # Debugging: show response in Streamlit
+        st.write("🔎 Translation Response:", result)
+
+        if isinstance(result, dict):
+            return (result.get("generated_text") or "").strip()
+        elif isinstance(result, str):
+            return result.strip()
+        else:
+            return str(result).strip()
+
+    except Exception as e:
+        st.error(f"❌ Error translating text: {e}")
+        return text + f" (⚠️ Translation failed, kept in English)"
+
 
 def translate_text(text: str, target_lang: str) -> str:
     """Translate rewritten English text into target language."""
