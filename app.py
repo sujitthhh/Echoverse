@@ -187,6 +187,10 @@ if gen and user_text.strip():
         audio_bytes = speak_ibm_tts(rewritten, voice=voice)
         progress_bar.progress(100)
 
+    if audio_bytes: 
+        st.audio(audio_bytes, format="audio/mp3") 
+        st.download_button( "⬇️ Download MP3", data=audio_bytes, file_name="echoverse_narration.mp3", mime="audio/mp3",)
+
     if audio_bytes:
         # Save to history
         st.session_state.history.append({
